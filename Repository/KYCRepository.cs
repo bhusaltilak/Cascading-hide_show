@@ -1,71 +1,88 @@
-﻿using KYC.Data;
-using KYC.Models.DbEntities;
-using KYC.Models.ViewModel;
-using Microsoft.EntityFrameworkCore;
+﻿    using KYC.Data;
+    using KYC.Models.DbEntities;
+    using KYC.Models.ViewModel;
+    using Microsoft.EntityFrameworkCore;
 
-namespace KYC.Repository
-{
-    public class KYCRepository : IKYCRepository
+    namespace KYC.Repository
     {
-        private readonly ApplicationDbContext _context;
-
-        public KYCRepository(ApplicationDbContext context)
+        public class KYCRepository : IKYCRepository
         {
-            _context = context;
+            private readonly ApplicationDbContext _context;
+
+            public KYCRepository(ApplicationDbContext context)
+            {
+                _context = context;
+            }
+
+        public async Task<KYCViewModel> GetByIdAsync(int? id)
+        {
+            if (id == null)
+                return new KYCViewModel();
+
+            var data = await (
+                from kyc in _context.KYCMs
+                join province in _context.Provinces on kyc.ProvinceId equals province.ProvinceId
+                join district in _context.Districts on kyc.DistrictId equals district.DistrictId
+                join vdc in _context.VDCs on kyc.VDCId equals vdc.VDCId
+                where kyc.Id == id && !kyc.IsDeleted
+                select new KYCViewModel
+                {
+                    Id = kyc.Id,
+                    Name = kyc.Name,
+                    PhoneNumber = kyc.PhoneNumber,
+                    Email = kyc.Email,
+                    ProvinceId = kyc.ProvinceId,
+                    DistrictId = kyc.DistrictId,
+                    VDCId = kyc.VDCId,
+                    ProvinceName = province.ProvinceName,
+                    DistrictName = district.DistrictName,
+                    VDCName = vdc.VDCName
+                }
+            ).FirstOrDefaultAsync();
+
+            return data ?? new KYCViewModel();
         }
+
 
 
         public async Task<List<KYCViewModel>> GetAllAsync()
         {
-            return await _context.KYCMs
-                .Include(k => k.Province)
-                .Include(k => k.District)
-                .Include(k => k.VDC)
-                .Select(k => new KYCViewModel
+            var data = await (
+                from kyc in _context.KYCMs
+                join province in _context.Provinces on kyc.ProvinceId equals province.ProvinceId
+                join district in _context.Districts on kyc.DistrictId equals district.DistrictId
+                join vdc in _context.VDCs on kyc.VDCId equals vdc.VDCId
+                where !kyc.IsDeleted
+                select new KYCViewModel
                 {
-                    Id = k.Id,
-                    Name = k.Name,
-                    PhoneNumber = k.PhoneNumber,
-                    Email = k.Email,
-                    ProvinceId = k.ProvinceId,
-                    DistrictId = k.DistrictId,
-                    VDCId = k.VDCId,
-                    ProvinceName = k.Province.ProvinceName,
-                    DistrictName = k.District.DistrictName,
-                    VDCName = k.VDC.VDCName
-                })
-                .ToListAsync();
+                    Id = kyc.Id,
+                    Name = kyc.Name,
+                    PhoneNumber = kyc.PhoneNumber,
+                    Email = kyc.Email,
+                    ProvinceId = kyc.ProvinceId,
+                    DistrictId = kyc.DistrictId,
+                    VDCId = kyc.VDCId,
+                    ProvinceName = province.ProvinceName,
+                    DistrictName = district.DistrictName,
+                    VDCName = vdc.VDCName
+                }
+            ).ToListAsync();
+
+            return data ?? new List<KYCViewModel>();
         }
 
 
 
         public async Task<List<Province>> GetAllProvincesAsync() =>
-         await _context.Provinces.ToListAsync();
+             await _context.Provinces.ToListAsync();
 
-        public async Task<List<District>> GetDistrictsByProvinceIdAsync(int provinceId) =>
-            await _context.Districts.Where(d => d.ProvinceId == provinceId).ToListAsync();
+            public async Task<List<District>> GetDistrictsByProvinceIdAsync(int provinceId) =>
+                await _context.Districts.Where(d => d.ProvinceId == provinceId).ToListAsync();
 
-        public async Task<List<VDC>> GetVDCsByDistrictIdAsync(int districtId) =>
-            await _context.VDCs.Where(v => v.DistrictId == districtId).ToListAsync();
+            public async Task<List<VDC>> GetVDCsByDistrictIdAsync(int districtId) =>
+                await _context.VDCs.Where(v => v.DistrictId == districtId).ToListAsync();
 
-        public async Task<KYCViewModel> GetByIdAsync(int id)
-        {
-            var entity = await _context.KYCMs.FindAsync(id);
-            if (entity == null) return null;
 
-            return new KYCViewModel
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                PhoneNumber = entity.PhoneNumber,
-                Email = entity.Email,
-                ProvinceId = entity.ProvinceId,
-                DistrictId = entity.DistrictId,
-                VDCId = entity.VDCId,
-                Districts = await GetDistrictsByProvinceIdAsync(entity.ProvinceId),
-                VDCs = await GetVDCsByDistrictIdAsync(entity.DistrictId)
-            };
-        }
 
         public async Task SaveAsync(KYCViewModel model)
         {
@@ -73,15 +90,24 @@ namespace KYC.Repository
 
             if (model.Id == 0)
             {
-                entity = new KYCM();
+               
+                entity = new KYCM
+                {
+                    Id = model.Id 
+                };
                 _context.KYCMs.Add(entity);
             }
             else
             {
-                entity = await _context.KYCMs.FindAsync(model.Id);
-                if (entity == null) return;
+               
+                entity = await _context.KYCMs
+                    .FirstOrDefaultAsync(e => e.Id == model.Id && e.Id == model.Id);
+
+                if (entity == null) 
+                    return; 
             }
 
+          
             entity.Name = model.Name;
             entity.PhoneNumber = model.PhoneNumber;
             entity.Email = model.Email;
@@ -89,18 +115,22 @@ namespace KYC.Repository
             entity.DistrictId = model.DistrictId;
             entity.VDCId = model.VDCId;
 
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
         }
 
+
         public async Task DeleteAsync(int id)
-        {
-            var entity = await _context.KYCMs.FindAsync(id);
-            if (entity != null)
             {
-                _context.KYCMs.Remove(entity);
+                var entity = await _context.KYCMs.FindAsync(id);
+                if (entity != null)
+                {
+                entity.IsDeleted = true;
                 await _context.SaveChangesAsync();
+                }
             }
-        }
+
+
+
     }
 }
 

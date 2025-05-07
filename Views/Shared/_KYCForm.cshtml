@@ -1,0 +1,72 @@
+﻿@model KYC.Models.ViewModel.KYCViewModel
+
+<div class="container mt-5">
+    <div class="card shadow-lg rounded-4 border-0">
+        <div class="card-header bg-primary text-white rounded-top-4">
+            <h3 class="mb-0">@((Model.Id == 0) ? "Create KYC" : "Edit KYC")</h3>
+        </div>
+
+        <div class="card-body p-4">
+            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+            <form asp-action="CreateEdit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" placeholder="Enter email address" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Province</label>
+                    <select asp-for="ProvinceId" class="form-select" id="ProvinceDropdown"
+                            asp-items="@(new SelectList(Model.Provinces, "ProvinceId", "ProvinceName", Model.ProvinceId))">
+                        <option value="">-- Select Province --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3" id="districtDiv" style="@(Model.DistrictId == null || Model.DistrictId == 0 ? "display:none;" : "")">
+                    <label class="form-label">District</label>
+                    <select asp-for="DistrictId" class="form-select" id="DistrictDropdown"
+                            asp-items="@(new SelectList(Model.Districts, "DistrictId", "DistrictName", Model.DistrictId))">
+                        <option value="">-- Select District --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3" id="vdcDiv" style="@(Model.VDCId == null || Model.VDCId == 0 ? "display:none;" : "")">
+                    <label class="form-label">VDC</label>
+                    <select asp-for="VDCId" class="form-select" id="VDCDropdown"
+                            asp-items="@(new SelectList(Model.VDCs, "VDCId", "VDCName", Model.VDCId))">
+                        <option value="">-- Select VDC --</option>
+                    </select>
+                </div>
+
+
+              
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success px-4 mt-3">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/kyc.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+}

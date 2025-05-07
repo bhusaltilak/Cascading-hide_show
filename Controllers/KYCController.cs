@@ -2,7 +2,6 @@
 using KYC.Models.ViewModel;
 using KYC.Repository;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace KYC.Controllers
 {
@@ -15,8 +14,7 @@ namespace KYC.Controllers
             _repo = repo;
         }
 
-
-        [HttpGet]
+      
         public async Task<IActionResult> Index()
         {
             var list = await _repo.GetAllAsync();
@@ -27,16 +25,19 @@ namespace KYC.Controllers
         [HttpGet]
         public async Task<IActionResult> CreateEdit(int? id)
         {
-            var model = id == null
-                ? new KYCViewModel()
-                : await _repo.GetByIdAsync(id.Value);
+            var model = await _repo.GetByIdAsync(id);
 
             model.Provinces = await _repo.GetAllProvincesAsync();
-            model.Districts ??= new List<District>();
-            model.VDCs ??= new List<VDC>();
+            model.Districts = model.ProvinceId != 0
+                ? await _repo.GetDistrictsByProvinceIdAsync(model.ProvinceId)
+                : new List<District>();
+            model.VDCs = model.DistrictId != 0
+                ? await _repo.GetVDCsByDistrictIdAsync(model.DistrictId)
+                : new List<VDC>();
 
             return View(model);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CreateEdit(KYCViewModel model)
@@ -49,12 +50,19 @@ namespace KYC.Controllers
                 return View(model);
             }
 
-            await _repo.SaveAsync(model); 
-            return RedirectToAction("Index");
+            await _repo.SaveAsync(model);
+            return RedirectToAction(nameof(Index));
         }
 
+      
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _repo.DeleteAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
 
-
+        
         [HttpGet]
         public async Task<JsonResult> GetDistricts(int provinceId)
         {
@@ -62,6 +70,7 @@ namespace KYC.Controllers
             return Json(data.Select(d => new { d.DistrictId, d.DistrictName }));
         }
 
+ 
         [HttpGet]
         public async Task<JsonResult> GetVDCs(int districtId)
         {
@@ -69,14 +78,6 @@ namespace KYC.Controllers
             return Json(data.Select(v => new { v.VDCId, v.VDCName }));
         }
 
-
-        [HttpPost]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _repo.DeleteAsync(id);
-            return RedirectToAction("Index");
-        }
-
-
+       
     }
 }

@@ -1,5 +1,6 @@
 ﻿using KYC.Models.DbEntities;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace KYC.Models.ViewModel
 {
     public class KYCViewModel
@@ -33,8 +34,11 @@ namespace KYC.Models.ViewModel
 
 
         public List<Province> Provinces { get; set; }
+      
         public List<District> Districts { get; set; }
+
         public List<VDC> VDCs { get; set; }
+
     }
 }
 

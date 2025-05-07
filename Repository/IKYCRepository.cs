@@ -11,7 +11,7 @@ namespace KYC.Repository
         Task<List<Province>> GetAllProvincesAsync();
         Task<List<District>> GetDistrictsByProvinceIdAsync(int provinceId);
         Task<List<VDC>> GetVDCsByDistrictIdAsync(int districtId);
-        Task<KYCViewModel> GetByIdAsync(int id);
+        Task<KYCViewModel> GetByIdAsync(int? id);
         Task SaveAsync(KYCViewModel model);
         Task DeleteAsync(int id);
 

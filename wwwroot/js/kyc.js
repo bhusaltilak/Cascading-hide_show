@@ -1,4 +1,10 @@
-﻿$(document).ready(function () {
+﻿
+
+
+$(document).ready(function () {
+    var provinceDropdown = $('#ProvinceDropdown');
+    var districtDropdown = $('#DistrictDropdown');
+    var vdcDropdown = $('#VDCDropdown');
     $('#ProvinceDropdown').change(function () {
         const provinceId = $(this).val();
         $('#vdcDiv').hide();
@@ -36,4 +42,18 @@
             $('#VDCDropdown').html('');
         }
     });
+    // On page load (edit mode)
+    const selectedProvince = provinceDropdown.val();
+    const selectedDistrict = districtDropdown.attr("data-selected");
+    const selectedVDC = vdcDropdown.attr("data-selected");
+
+    if (selectedProvince) {
+        loadDistricts(selectedProvince, selectedDistrict);
+        if (selectedDistrict) {
+            loadVDCs(selectedDistrict, selectedVDC);
+        }
+    }
+
 });
+
+
